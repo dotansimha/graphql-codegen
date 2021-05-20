@@ -30,14 +30,17 @@ export const federationSpec = parse(/* GraphQL */ `
 `);
 
 /**
- * Adds `__resolveReference` in each ObjectType involved in Federation.
+ * Adds `__resolveReference` in each ObjectType involved in Federation, only when there's a mapped type in config.mappers.
  * @param schema
  */
-export function addFederationReferencesToSchema(schema: GraphQLSchema): GraphQLSchema {
+export function addFederationReferencesToSchema(
+  schema: GraphQLSchema,
+  mappersTypeName: string[] | undefined
+): GraphQLSchema {
   const typeMap = schema.getTypeMap();
   for (const typeName in typeMap) {
     const type = schema.getType(typeName);
-    if (isObjectType(type) && isFederationObjectType(type)) {
+    if (isObjectType(type) && isFederationObjectType(type) && mappersTypeName && mappersTypeName.includes(typeName)) {
       const typeConfig = type.toConfig();
       typeConfig.fields = {
         [resolveReferenceFieldName]: {
@@ -150,51 +153,75 @@ export class ApolloFederation {
     return this.enabled && name === resolveReferenceFieldName;
   }
 
+  isTypeFederated(type: GraphQLNamedType): type is GraphQLObjectType {
+    return this.enabled && isObjectType(type) && isFederationObjectType(type);
+  }
+
+  isResolveReferenceToBeTransformed({
+    fieldNode,
+    mappersTypeNames,
+    parentType,
+  }: {
+    fieldNode: FieldDefinitionNode;
+    mappersTypeNames: string[];
+    parentType: GraphQLObjectType;
+  }) {
+    return mappersTypeNames.includes(parentType.name) && fieldNode.name.value === resolveReferenceFieldName;
+  }
+
+  isTypeExtensionToBeTransformed({
+    mappersTypeNames,
+    parentType,
+  }: {
+    mappersTypeNames: string[];
+    parentType: GraphQLObjectType;
+  }) {
+    return !mappersTypeNames.includes(parentType.name) && isTypeExtension(parentType);
+  }
+
   /**
-   * Transforms ParentType signature in ObjectTypes involved in Federation
+   * Transforms ParentType signature in ObjectTypes' __resolveReference involved in Federation
    * @param data
    */
-  transformParentType({
-    fieldNode,
+  transformParentTypeSignature({
     parentType,
     parentTypeSignature,
   }: {
-    fieldNode: FieldDefinitionNode;
-    parentType: GraphQLNamedType;
+    parentType: GraphQLObjectType;
     parentTypeSignature: string;
   }) {
-    if (
-      this.enabled &&
-      isObjectType(parentType) &&
-      isFederationObjectType(parentType) &&
-      (isTypeExtension(parentType) || fieldNode.name.value === resolveReferenceFieldName)
-    ) {
-      const keys = getDirectivesByName('key', parentType);
+    const keys = getDirectivesByName('key', parentType);
 
-      if (keys.length) {
-        const outputs: string[] = [`{ __typename: '${parentType.name}' } &`];
+    if (keys.length) {
+      const outputs: string[] = [];
 
-        // Look for @requires and see what the service needs and gets
-        const requires = getDirectivesByName('requires', fieldNode).map(this.extractKeyOrRequiresFieldSet);
-        const requiredFields = this.translateFieldSet(merge({}, ...requires), parentTypeSignature);
+      outputs.push(`{ __typename: '${parentType.name}' }`);
 
-        // @key() @key() - "primary keys" in Federation
-        const primaryKeys = keys.map(def => {
-          const fields = this.extractKeyOrRequiresFieldSet(def);
-          return this.translateFieldSet(fields, parentTypeSignature);
-        });
+      // Will receive @key() fields - "primary keys" in Federation
+      const primaryKeys = keys.map(def => {
+        const fields = this.extractKeyOrRequiresFieldSet(def);
+        return this.translateFieldSet(fields, parentTypeSignature);
+      });
 
-        const [open, close] = primaryKeys.length > 1 ? ['(', ')'] : ['', ''];
+      const [open, close] = primaryKeys.length > 1 ? ['(', ')'] : ['', ''];
 
-        outputs.push([open, primaryKeys.join(' | '), close].join(''));
+      outputs.push([open, primaryKeys.join(' | '), close].join(''));
 
-        // include required fields
-        if (requires.length) {
-          outputs.push(`& ${requiredFields}`);
+      // Will perhaps receive @requires() fields, it depends on the requested fields.
+      const requiresFields = Object.values(parentType.getFields()).reduce((fields, field) => {
+        if (field.astNode) {
+          const requires = getDirectivesByName('requires', field.astNode).map(this.extractKeyOrRequiresFieldSet);
+          fields = merge(fields, ...requires);
         }
+        return fields;
+      }, {});
 
-        return outputs.join(' ');
+      if (Object.keys(requiresFields).length > 0) {
+        const requiredFields = this.translateFieldSet(requiresFields, parentTypeSignature);
+        outputs.push(`DeepPartial<${requiredFields}>`);
       }
+
+      return outputs.join(' & ');
     }
 
     return parentTypeSignature;
