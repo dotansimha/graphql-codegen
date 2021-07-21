@@ -19,6 +19,7 @@ export type Scalars = {
 };
 
 
+
 export type MyType = {
   __typename?: 'MyType';
   foo: Scalars['String'];
@@ -177,6 +178,10 @@ export type MyDirectiveDirectiveArgs = {   arg: Scalars['Int'];
 
 export type MyDirectiveDirectiveResolver<Result, Parent, ContextType = any, Args = MyDirectiveDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type AuthenticatedDirectiveArgs = {  };
+
+export type AuthenticatedDirectiveResolver<Result, Parent, ContextType = any, Args = AuthenticatedDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
 export type MyTypeResolvers<ContextType = any, ParentType = ResolversParentTypes['MyType']> = ResolversObject<{
   foo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   otherType?: Resolver<Maybe<ResolversTypes['MyOtherType']>, ParentType, ContextType>;
@@ -247,6 +252,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
 export type IResolvers<ContextType = any> = Resolvers<ContextType>;
 export type DirectiveResolvers<ContextType = any> = ResolversObject<{
   myDirective?: MyDirectiveDirectiveResolver<any, any, ContextType>;
+  authenticated?: AuthenticatedDirectiveResolver<any, any, ContextType>;
 }>;
 
 
@@ -379,6 +385,10 @@ export type MyDirectiveDirectiveArgs = {   arg: Types.Scalars['Int'];
 
 export type MyDirectiveDirectiveResolver<Result, Parent, ContextType = any, Args = MyDirectiveDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type AuthenticatedDirectiveArgs = {  };
+
+export type AuthenticatedDirectiveResolver<Result, Parent, ContextType = any, Args = AuthenticatedDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
 export type MyTypeResolvers<ContextType = any, ParentType extends ResolversParentTypes['MyType'] = ResolversParentTypes['MyType']> = ResolversObject<{
   foo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   otherType?: Resolver<Types.Maybe<ResolversTypes['MyOtherType']>, ParentType, ContextType>;
@@ -449,6 +459,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
 export type IResolvers<ContextType = any> = Resolvers<ContextType>;
 export type DirectiveResolvers<ContextType = any> = ResolversObject<{
   myDirective?: MyDirectiveDirectiveResolver<any, any, ContextType>;
+  authenticated?: AuthenticatedDirectiveResolver<any, any, ContextType>;
 }>;
 
 
@@ -476,6 +487,7 @@ export type Scalars = {
   Float: number;
   MyScalar: any;
 };
+
 
 
 export type MyType = {
@@ -636,6 +648,10 @@ export type MyDirectiveDirectiveArgs = {   arg: Scalars['Int'];
 
 export type MyDirectiveDirectiveResolver<Result, Parent, ContextType = any, Args = MyDirectiveDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type AuthenticatedDirectiveArgs = {  };
+
+export type AuthenticatedDirectiveResolver<Result, Parent, ContextType = any, Args = AuthenticatedDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
 export type MyTypeResolvers<ContextType = any, ParentType extends ResolversParentTypes['MyType'] = ResolversParentTypes['MyType']> = ResolversObject<{
   foo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   otherType?: Resolver<Maybe<ResolversTypes['MyOtherType']>, ParentType, ContextType>;
@@ -706,6 +722,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
 export type IResolvers<ContextType = any> = Resolvers<ContextType>;
 export type DirectiveResolvers<ContextType = any> = ResolversObject<{
   myDirective?: MyDirectiveDirectiveResolver<any, any, ContextType>;
+  authenticated?: AuthenticatedDirectiveResolver<any, any, ContextType>;
 }>;
 
 
